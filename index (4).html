@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard ambiental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#eef1f8;--card:#fff;--ink:#1f2547;--muted:#8b91ad;--line:#e6e9f4;--v:#6c4cf1;--c:#2ed3f0;--r:#ef5b5b;--sh:0 12px 32px rgba(108,120,176,.16);color-scheme:light}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Poppins,"Segoe UI",system-ui,sans-serif;font-size:14px;line-height:1.5}
+:focus-visible{outline:3px solid var(--v);outline-offset:2px}
+.muted{color:var(--muted)} .err{color:#d64545}
+.rail{position:fixed;top:16px;bottom:16px;left:16px;width:60px;background:var(--card);border-radius:18px;box-shadow:var(--sh);display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0;z-index:30}
+.rail .logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#7b5cf6,#2ed3f0);margin-bottom:10px;font-size:1.2rem}
+.rail a{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;color:#9aa1bd}
+.rail a:hover{color:var(--v);background:#f1edff}
+.rail svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.wrap{margin-left:92px;padding:16px 20px 32px 0;max-width:1260px}
+.g{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
+.s3{grid-column:span 3}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s12{grid-column:1/-1}
+.card{background:var(--card);border-radius:18px;box-shadow:var(--sh);padding:18px 20px;min-width:0}
+h1{font-size:1.35rem;margin:0;font-weight:600}
+h2{font-size:.95rem;margin:0 0 14px;font-weight:600}
+p{margin:.25rem 0}
+.top{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:16px;position:relative;z-index:20}
+.top>div:first-child{flex:1 1 220px}
+.busq{position:relative;flex:1 1 300px;max-width:440px}
+.busq input{width:100%;font:inherit;padding:.7rem 1rem .7rem 2.7rem;border:1px solid var(--line);border-radius:12px;background:#f6f7fc;color:var(--ink)}
+.busq>svg{position:absolute;left:.9rem;top:.8rem;width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
+#sug{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:6px;margin:0;list-style:none;max-height:330px;overflow:auto;z-index:2000}
+#sug li{padding:.5rem .75rem;border-radius:10px;cursor:pointer}
+#sug li[aria-selected=true],#sug li[data-i]:hover{background:#f1edff}
+#sug .h{font-size:.75rem;color:var(--muted);cursor:default;padding:.3rem .75rem}
+.t{font-weight:500}.sb{color:var(--muted);font-size:.8rem}
+.btn{font:inherit;font-weight:500;padding:.7rem 1.2rem;border:0;border-radius:12px;background:linear-gradient(135deg,#7b5cf6,#5b3ee8);color:#fff;cursor:pointer;box-shadow:0 8px 18px rgba(108,76,241,.35)}
+.btn2{font:inherit;padding:.55rem 1rem;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.btn2:hover{border-color:var(--v)}
+.kpi{display:flex;align-items:center;gap:14px;padding:16px 18px}
+.ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:1.3rem;flex:none}
+.kpi b{display:block;font-size:1.4rem;line-height:1.2;font-weight:600}
+.kpi small{color:var(--muted)}
+.cond{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.donuts{display:flex;gap:14px}
+.anillo{text-align:center;font-size:.78rem;color:var(--muted);width:112px}
+.anillo svg{width:100%;display:block}
+.det{margin:0;flex:1 1 130px}
+.det div{display:flex;justify-content:space-between;gap:10px;padding:.35rem 0;border-bottom:1px solid var(--line)}
+.det dt{color:var(--muted)}.det dd{margin:0;font-weight:600}
+.barras{display:flex;align-items:flex-end;gap:10px;height:190px}
+.col{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;font-size:.75rem}
+.col .b{width:100%;max-width:22px;border-radius:7px;background:linear-gradient(180deg,#2ed3f0,#1db5d8)}
+.col .b.hot{background:var(--r)}
+.col .v{font-weight:600}.col .d{color:var(--muted)}
+.leyenda{list-style:none;margin:.5rem 0 0;padding:0;font-size:.8rem}
+.leyenda li{display:flex;align-items:center;gap:8px;padding:.15rem 0}
+.leyenda i{width:10px;height:10px;border-radius:50%}
+.leyenda b{margin-left:auto}
+.lista{list-style:none;margin:0;padding:0}
+.lista li{padding:.7rem 0;border-top:1px solid var(--line)}
+.lista li:first-child{border-top:0;padding-top:0}
+.fila{display:flex;justify-content:space-between;gap:1rem;font-weight:500}
+.fila b{color:var(--v);flex:none}
+.lista small{color:var(--muted)}
+.prog{height:5px;background:#eef0f8;border-radius:9px;margin:.4rem 0 .2rem;overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--v),#9b86ff);border-radius:9px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff8c1a;margin-right:8px}
+.capas{display:flex;flex-wrap:wrap;gap:.6rem 1.5rem;align-items:center;margin:.6rem 0 .9rem}
+.capas label{display:flex;align-items:center;gap:.4rem;cursor:pointer}
+.capas input[type=date]{font:inherit;padding:.25rem .5rem;border-radius:8px;border:1px solid var(--line);color:var(--ink)}
+.capas input[type=checkbox]{accent-color:var(--v);width:16px;height:16px}
+#mapa{height:520px;border-radius:14px;z-index:0;background:#1d2b2a}
+#avisoCapas:empty{display:none}
+footer{margin-top:16px;font-size:.8rem;color:var(--muted)}footer a{color:inherit}
+.drow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:.6rem 0;border-top:1px solid var(--line)}
+.drow:first-child{border-top:0}
+.drow .btn2,.hbtns .btn2{padding:.35rem .9rem;font-size:.85rem}
+.btn2:disabled{opacity:.45;cursor:not-allowed}
+.hbtns{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
+.capas select{font:inherit;padding:.25rem .5rem;border-radius:8px;border:1px solid var(--line);color:var(--ink)}
+h3{font-size:.9rem;margin:1.3rem 0 .3rem}
+@media (max-width:1100px){.s3{grid-column:span 6}.s4,.s5,.s6{grid-column:1/-1}}
+@media (max-width:700px){.rail{display:none}.wrap{margin-left:0;padding:12px}#mapa{height:400px}}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Secciones">
+  <div class="logo" aria-hidden="true">🌿</div>
+  <a href="#resumen" aria-label="Resumen" title="Resumen"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></a>
+  <a href="#mapaSec" aria-label="Mapa" title="Mapa"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg></a>
+  <a href="#sismosSec" aria-label="Sismos" title="Sismos"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></a>
+  <a href="#incendiosSec" aria-label="Incendios" title="Incendios"><svg viewBox="0 0 24 24"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3 0-6 1-9z"/></svg></a>
+  <a href="#descSec" aria-label="Descargas" title="Descargas"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg></a>
+</nav>
+
+<div class="wrap" id="resumen">
+  <header class="card top">
+    <div><h1>Dashboard ambiental</h1><p id="lugar" class="muted">Cargando…</p></div>
+    <div class="busq">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="buscar" type="search" role="combobox" autocomplete="off" aria-expanded="false" aria-controls="sug" aria-autocomplete="list" placeholder="Busca una ciudad o coordenadas" aria-label="Buscar ciudad o coordenadas">
+      <ul id="sug" role="listbox" hidden></ul>
+    </div>
+    <button id="btnUbicacion" class="btn" type="button">Usar mi ubicación</button>
+  </header>
+
+  <main class="g">
+    <section class="card kpi s3"><div class="ico" style="background:#efe9ff">🌡️</div><div><b id="kTemp">–</b><small>Temperatura</small></div></section>
+    <section class="card kpi s3"><div class="ico" style="background:#e1f8fd">🌫️</div><div><b id="kAqi">–</b><small id="kAqiS">Calidad del aire (AQI)</small></div></section>
+    <section class="card kpi s3"><div class="ico" style="background:#e8f0ff">💧</div><div><b id="kHum">–</b><small>Humedad</small></div></section>
+    <section class="card kpi s3"><div class="ico" style="background:#e9fbf2">💨</div><div><b id="kVie">–</b><small>Viento</small></div></section>
+
+    <section class="card s5" aria-live="polite">
+      <h2>Condiciones actuales</h2>
+      <div class="cond">
+        <div id="donuts" class="donuts"></div>
+        <dl class="det">
+          <div><dt>Sensación térmica</dt><dd id="dSens">–</dd></div>
+          <div><dt>Precipitación</dt><dd id="dPrec">–</dd></div>
+          <div><dt>PM2.5</dt><dd id="dPm25">–</dd></div>
+          <div><dt>PM10</dt><dd id="dPm10">–</dd></div>
+          <div><dt>Ozono</dt><dd id="dOz">–</dd></div>
+        </dl>
+      </div>
+    </section>
+    <section class="card s4" aria-live="polite">
+      <h2>Temperatura máxima, próximos 7 días</h2>
+      <div id="barras" class="barras">Cargando…</div>
+    </section>
+    <section class="card s3" aria-live="polite">
+      <h2>Sismos por magnitud</h2>
+      <div id="anilloSismos">Cargando…</div>
+    </section>
+
+    <section class="card s12" id="mapaSec">
+      <h2>Mapa: ubicación, vegetación y deforestación</h2>
+      <p class="muted">Geovisor: haz clic en cualquier punto del mapa para consultarlo, o usa el botón "Usar mi ubicación".</p>
+      <div class="capas">
+        <label><input type="checkbox" id="chkNdvi"> Vegetación NDVI (MODIS)</label>
+        <label>Fecha NDVI: <input type="date" id="fechaNdvi"></label>
+        <label><input type="checkbox" id="chkBosque"> Pérdida de bosque (experimental)</label>
+      </div>
+      <div id="mapa" role="application" aria-label="Mapa interactivo"></div>
+      <p style="margin-top:.9rem"><button id="btnGfw" type="button" class="btn2">Abrir esta zona en Global Forest Watch ↗</button></p>
+      <p id="avisoCapas" class="err" role="status"></p>
+      <p class="muted">El NDVI viene de composiciones satelitales cada 8 días, así que suele ir unas 2 o 3 semanas atrasado: si la capa se ve vacía, elige una fecha anterior. Con el control de capas del mapa puedes cambiar el mapa base y mostrar u ocultar nombres, sismos e incendios.</p>
+    </section>
+
+    <section class="card s6" id="sismosSec" aria-live="polite">
+      <h2>Sismos más fuertes de las últimas 24 horas (M2.5+)</h2>
+      <div id="sismos">Cargando…</div>
+    </section>
+    <section class="card s6" id="incendiosSec" aria-live="polite">
+      <h2>Incendios forestales activos</h2>
+      <div id="incendios">Cargando…</div>
+    </section>
+
+    <section class="card s12" id="descSec">
+      <h2>Descargar registros y bases de datos</h2>
+      <p class="muted">Datos que estás viendo ahora, listos para abrir en Excel o en cualquier programa de análisis.</p>
+      <div id="descargas"></div>
+      <p style="margin-top:.8rem"><button id="btnTodo" class="btn" type="button">Descargar todo (JSON)</button></p>
+
+      <h3>Consultar un periodo histórico</h3>
+      <p class="muted">El clima usa el lugar seleccionado. Los sismos son de todo el mundo (máximo 1 año por descarga).</p>
+      <div class="capas">
+        <label>Desde <input type="date" id="hDesde"></label>
+        <label>Hasta <input type="date" id="hHasta"></label>
+        <label>Magnitud mínima de sismos
+          <select id="hMag"><option value="2.5">2.5</option><option value="4.5" selected>4.5</option><option value="6">6.0</option></select>
+        </label>
+      </div>
+      <div class="hbtns">
+        <button class="btn2" type="button" data-h="clima" data-f="csv">Clima histórico (CSV)</button>
+        <button class="btn2" type="button" data-h="clima" data-f="json">Clima histórico (JSON)</button>
+        <button class="btn2" type="button" data-h="sismos" data-f="csv">Sismos del periodo (CSV)</button>
+        <button class="btn2" type="button" data-h="sismos" data-f="json">Sismos del periodo (JSON)</button>
+      </div>
+      <p id="msgDesc" class="muted" role="status"></p>
+      <p class="muted">Al reutilizar los datos cita las fuentes (Open-Meteo, USGS y NASA EONET) y revisa sus condiciones de uso, sobre todo si es para fines comerciales. Si Excel muestra todo en una sola columna, usa Datos → Desde texto/CSV.</p>
+    </section>
+  </main>
+
+  <footer>
+    Fuentes abiertas: <a href="https://open-meteo.com">Open-Meteo</a> (clima, aire y búsqueda de lugares),
+    <a href="https://earthquake.usgs.gov">USGS</a> (sismos), <a href="https://eonet.gsfc.nasa.gov">NASA EONET</a> (incendios),
+    <a href="https://www.arcgis.com">Esri</a> (mapas base), <a href="https://earthdata.nasa.gov/gibs">NASA GIBS</a> (NDVI MODIS),
+    <a href="https://www.globalforestwatch.org">Global Forest Watch</a> (pérdida de bosque) y <a href="https://leafletjs.com">Leaflet</a> (visor).
+    Los sismos e incendios son globales y no dependen del lugar elegido.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fallo = (id, m) => { $(id).innerHTML = `<span class="err">${m}</span>`; };
+async function getJSON(u) { const r = await fetch(u); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }
+
+/* ---------- Anillos (donuts) en SVG ---------- */
+function anillo(segs, centro, sub) {
+  const R = 40, C = 2 * Math.PI * R; let off = 0;
+  const arcs = segs.filter(s => s.v > 0).map(s => {
+    const l = C * s.v;
+    const el = `<circle cx="50" cy="50" r="${R}" fill="none" stroke="${s.c}" stroke-width="11" stroke-linecap="round" stroke-dasharray="${Math.max(l - 4, 0.01)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 50 50)"/>`;
+    off += l; return el;
+  }).join("");
+  return `<div class="anillo"><svg viewBox="0 0 100 100" role="img" aria-label="${sub}: ${centro}"><circle cx="50" cy="50" r="${R}" fill="none" stroke="#eef0f8" stroke-width="11"/>${arcs}<text x="50" y="55" text-anchor="middle" font-size="16" font-weight="600" fill="#1f2547" font-family="Poppins,sans-serif">${centro}</text></svg>${sub}</div>`;
+}
+
+/* ---------- Clima ---------- */
+async function cargarClima(lat, lon) {
+  try {
+    const d = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=7`);
+    const c = d.current, dia = d.daily;
+    Object.assign(datos.actual, { hora_local: c.time, temperatura_c: c.temperature_2m, sensacion_c: c.apparent_temperature, humedad_pct: c.relative_humidity_2m, viento_kmh: c.wind_speed_10m, precipitacion_mm: c.precipitation });
+    datos.pronostico = dia.time.map((t, i) => ({ lugar: datos.lugar.nombre, latitud: datos.lugar.lat, longitud: datos.lugar.lon, fecha: t, temp_max_c: dia.temperature_2m_max[i], temp_min_c: dia.temperature_2m_min[i], prob_lluvia_max_pct: dia.precipitation_probability_max[i] }));
+    actualizarDescargas();
+    $("kTemp").textContent = Math.round(c.temperature_2m) + "°C";
+    $("kHum").textContent = c.relative_humidity_2m + "%";
+    $("kVie").textContent = c.wind_speed_10m + " km/h";
+    $("dSens").textContent = Math.round(c.apparent_temperature) + "°C";
+    $("dPrec").textContent = c.precipitation + " mm";
+    const pl = dia.precipitation_probability_max[0] ?? 0;
+    $("donuts").innerHTML =
+      anillo([{ v: c.relative_humidity_2m / 100, c: "#6c4cf1" }], Math.round(c.relative_humidity_2m) + "%", "Humedad") +
+      anillo([{ v: pl / 100, c: "#2ed3f0" }], pl + "%", "Lluvia hoy");
+    const maxT = Math.max(...dia.temperature_2m_max), minT = Math.min(...dia.temperature_2m_max), rango = Math.max(maxT - minT, 1);
+    $("barras").innerHTML = dia.time.map((f, i) => {
+      const mx = dia.temperature_2m_max[i], h = 18 + ((mx - minT) / rango) * 90;
+      const nom = new Date(f + "T12:00").toLocaleDateString("es", { weekday: "short" });
+      return `<div class="col"><span class="v">${Math.round(mx)}°</span><div class="b${mx === maxT ? " hot" : ""}" style="height:${h}px" title="Máx ${mx}° / Mín ${dia.temperature_2m_min[i]}°"></div><span class="d">${nom}</span></div>`;
+    }).join("");
+  } catch (e) { fallo("barras", "No se pudo cargar el clima. Intenta de nuevo."); $("donuts").innerHTML = ""; }
+}
+
+/* ---------- Aire ---------- */
+function categoriaAQI(v) {
+  if (v <= 50) return ["Buena", "#1fa971"];
+  if (v <= 100) return ["Moderada", "#c99700"];
+  if (v <= 150) return ["Dañina para sensibles", "#e07b00"];
+  if (v <= 200) return ["Dañina", "#e0452f"];
+  if (v <= 300) return ["Muy dañina", "#9b4bc0"];
+  return ["Peligrosa", "#a3243f"];
+}
+async function cargarAire(lat, lon) {
+  try {
+    const d = await getJSON(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm2_5,pm10,ozone`);
+    const c = d.current;
+    Object.assign(datos.actual, { aqi_us: c.us_aqi, pm2_5_ugm3: c.pm2_5, pm10_ugm3: c.pm10, ozono_ugm3: c.ozone });
+    if (c.us_aqi == null) { $("kAqi").textContent = "–"; $("kAqiS").textContent = "Sin datos de aire"; ["dPm25", "dPm10", "dOz"].forEach(i => $(i).textContent = "–"); return; }
+    const [cat, col] = categoriaAQI(c.us_aqi);
+    $("kAqi").textContent = Math.round(c.us_aqi);
+    $("kAqiS").innerHTML = `AQI · <b style="display:inline;font-size:inherit;color:${col}">${cat}</b>`;
+    $("dPm25").textContent = c.pm2_5 + " µg/m³"; $("dPm10").textContent = c.pm10 + " µg/m³"; $("dOz").textContent = c.ozone + " µg/m³";
+  } catch (e) { $("kAqi").textContent = "–"; $("kAqiS").textContent = "Aire no disponible"; }
+}
+
+/* ---------- Sismos (globales) ---------- */
+const colorMag = m => m >= 6 ? "#ef5b5b" : m >= 4.5 ? "#f5a524" : "#ffd43b";
+async function cargarSismos() {
+  try {
+    const d = await getJSON("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson");
+    const f = d.features; pintarSismos(f);
+    datos.sismos = f.map(filaSismo); actualizarDescargas();
+    const menor = f.filter(x => x.properties.mag < 4.5).length, fuerte = f.filter(x => x.properties.mag >= 6).length, med = f.length - menor - fuerte, t = f.length || 1;
+    $("anilloSismos").innerHTML = anillo([{ v: menor / t, c: "#6c4cf1" }, { v: med / t, c: "#2ed3f0" }, { v: fuerte / t, c: "#ef5b5b" }], f.length, "sismos en 24 h") +
+      `<ul class="leyenda"><li><i style="background:#6c4cf1"></i>Menores a 4.5<b>${menor}</b></li><li><i style="background:#2ed3f0"></i>De 4.5 a 5.9<b>${med}</b></li><li><i style="background:#ef5b5b"></i>6.0 o más<b>${fuerte}</b></li></ul>`;
+    const top = [...f].sort((a, b) => b.properties.mag - a.properties.mag).slice(0, 8);
+    $("sismos").innerHTML = top.length ? `<ul class="lista">${top.map(x => `<li><div class="fila"><span>${esc(x.properties.place)}</span><b>M${x.properties.mag.toFixed(1)}</b></div><div class="prog"><i style="width:${Math.min(x.properties.mag / 8, 1) * 100}%"></i></div><small>${new Date(x.properties.time).toLocaleString("es")}</small></li>`).join("")}</ul>` : "No hubo sismos de magnitud 2.5 o más en las últimas 24 horas.";
+  } catch (e) { fallo("sismos", "No se pudieron cargar los sismos."); fallo("anilloSismos", "No disponible"); }
+}
+
+/* ---------- Incendios (globales) ---------- */
+async function cargarIncendios() {
+  try {
+    const d = await getJSON("https://eonet.gsfc.nasa.gov/api/v3/events?category=wildfires&status=open&limit=50");
+    pintarIncendios(d.events);
+    datos.incendios = d.events.map(e => {
+      const g = e.geometry[e.geometry.length - 1]; let c = g.coordinates;
+      while (Array.isArray(c[0])) c = c[0];
+      return { id: e.id, titulo: e.title, ultimo_reporte: g.date, latitud: c[1], longitud: c[0], fuente: e.sources?.[0]?.url ?? "" };
+    });
+    actualizarDescargas();
+    $("incendios").innerHTML = d.events.length ? `<ul class="lista">${d.events.slice(0, 8).map(e => {
+      const g = e.geometry[e.geometry.length - 1];
+      return `<li><div class="fila"><span><span class="dot"></span>${esc(e.title)}</span></div><small>Último reporte: ${new Date(g.date).toLocaleDateString("es")}</small></li>`;
+    }).join("")}</ul>` : "No hay incendios activos reportados.";
+  } catch (e) { fallo("incendios", "No se pudieron cargar los incendios."); }
+}
+
+/* ---------- Mapa ---------- */
+let mapa, marcador, capaSismos, capaIncendios;
+function iniciarMapa() {
+  if (typeof L === "undefined") { $("mapa").innerHTML = '<p class="err" style="padding:1rem">No se pudo cargar el mapa. Revisa tu conexión y recarga la página.</p>'; return; }
+  mapa = L.map("mapa").setView([4.711, -74.072], 5);
+  const esri = "https://server.arcgisonline.com/ArcGIS/rest/services";
+  const satelite = L.tileLayer(`${esri}/World_Imagery/MapServer/tile/{z}/{y}/{x}`, { maxZoom: 19, attribution: "Imágenes © Esri, Maxar, Earthstar Geographics" }).addTo(mapa);
+  const calles = L.tileLayer(`${esri}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`, { maxZoom: 19, attribution: "Mapa © Esri, HERE, Garmin, OpenStreetMap contributors" });
+  const topo = L.tileLayer(`${esri}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`, { maxZoom: 19, attribution: "Mapa topográfico © Esri, USGS, NOAA" });
+  const etiquetas = L.tileLayer(`${esri}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`, { maxZoom: 19, zIndex: 6, attribution: "Nombres © Esri" }).addTo(mapa);
+  capaSismos = L.layerGroup().addTo(mapa);
+  capaIncendios = L.layerGroup().addTo(mapa);
+  L.control.layers({ "Satélite (Esri)": satelite, "Calles (Esri)": calles, "Topográfico (Esri)": topo },
+    { "Nombres de lugares": etiquetas, "Sismos": capaSismos, "Incendios": capaIncendios }).addTo(mapa);
+  mapa.on("click", e => { const p = e.latlng.wrap(); mostrarCiudad("Punto del mapa", p.lat, p.lng, false); });
+
+  const hoy = new Date(); hoy.setDate(hoy.getDate() - 21);
+  $("fechaNdvi").value = hoy.toISOString().slice(0, 10);
+  $("fechaNdvi").max = new Date().toISOString().slice(0, 10);
+  let capaNdvi = null;
+  const actualizarNdvi = () => {
+    if (capaNdvi) { mapa.removeLayer(capaNdvi); capaNdvi = null; }
+    if (!$("chkNdvi").checked || !$("fechaNdvi").value) return;
+    capaNdvi = L.tileLayer(`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/${$("fechaNdvi").value}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`,
+      { maxNativeZoom: 9, maxZoom: 19, opacity: 0.75, zIndex: 3, attribution: "NDVI © NASA GIBS / MODIS" }).addTo(mapa);
+  };
+  $("chkNdvi").addEventListener("change", actualizarNdvi);
+  $("fechaNdvi").addEventListener("change", actualizarNdvi);
+
+  let capaBosque = null, errores = 0;
+  $("chkBosque").addEventListener("change", () => {
+    $("avisoCapas").textContent = ""; errores = 0;
+    if (capaBosque) { mapa.removeLayer(capaBosque); capaBosque = null; }
+    if (!$("chkBosque").checked) return;
+    capaBosque = L.tileLayer("https://tiles.globalforestwatch.org/umd_tree_cover_loss/latest/dynamic/{z}/{x}/{y}.png",
+      { maxNativeZoom: 12, maxZoom: 19, opacity: 0.85, zIndex: 4, attribution: "Pérdida de bosque © Hansen/UMD/Google/USGS/NASA vía Global Forest Watch" }).addTo(mapa);
+    capaBosque.on("tileerror", () => { if (++errores === 5) $("avisoCapas").textContent = "La capa de pérdida de bosque no respondió. Usa el botón «Abrir esta zona en Global Forest Watch» para verla allí."; });
+  });
+  $("btnGfw").addEventListener("click", () => {
+    const c = mapa.getCenter();
+    const estado = btoa(JSON.stringify({ center: { lat: +c.lat.toFixed(4), lng: +c.lng.toFixed(4) }, zoom: mapa.getZoom() }));
+    window.open("https://www.globalforestwatch.org/map/?map=" + encodeURIComponent(estado), "_blank", "noopener");
+  });
+}
+function pintarSismos(fs) {
+  if (!capaSismos) return; capaSismos.clearLayers();
+  fs.forEach(f => {
+    const [lon, lat] = f.geometry.coordinates, m = f.properties.mag;
+    L.circleMarker([lat, lon], { radius: 3 + m * 2, color: "#7a1f10", weight: 1, fillColor: colorMag(m), fillOpacity: .65 })
+      .bindPopup(`<b>M${m.toFixed(1)}</b><br>${esc(f.properties.place)}<br>${new Date(f.properties.time).toLocaleString("es")}`).addTo(capaSismos);
+  });
+}
+function pintarIncendios(ev) {
+  if (!capaIncendios) return; capaIncendios.clearLayers();
+  ev.forEach(e => {
+    const g = e.geometry[e.geometry.length - 1]; let c = g.coordinates;
+    while (Array.isArray(c[0])) c = c[0];
+    L.circleMarker([c[1], c[0]], { radius: 7, color: "#8a3b00", weight: 1, fillColor: "#ff8c1a", fillOpacity: .8 })
+      .bindPopup(`<b>${esc(e.title)}</b><br>Último reporte: ${new Date(g.date).toLocaleDateString("es")}`).addTo(capaIncendios);
+  });
+}
+
+/* ---------- Lugar seleccionado ---------- */
+function mostrarCiudad(nombre, lat, lon, centrar = true) {
+  lat = Number(lat); lon = Number(lon);
+  datos.lugar = { nombre, lat, lon };
+  datos.actual = { lugar: nombre, latitud: lat, longitud: lon, hora_local: null, temperatura_c: null, sensacion_c: null, humedad_pct: null, viento_kmh: null, precipitacion_mm: null, aqi_us: null, pm2_5_ugm3: null, pm10_ugm3: null, ozono_ugm3: null };
+  datos.pronostico = []; actualizarDescargas();
+  $("lugar").textContent = `Mostrando: ${nombre} (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+  if (mapa) {
+    if (marcador) marcador.setLatLng([lat, lon]); else marcador = L.marker([lat, lon]).addTo(mapa);
+    marcador.bindPopup(esc(nombre));
+    if (centrar) mapa.setView([lat, lon], Math.max(mapa.getZoom(), 10));
+  }
+  cargarClima(lat, lon); cargarAire(lat, lon);
+}
+
+/* ---------- Buscador con predicción ---------- */
+const POPULARES = [["Bogotá, Colombia", 4.711, -74.072], ["Cali, Colombia", 3.452, -76.532], ["Ciudad de México, México", 19.433, -99.133], ["Lima, Perú", -12.046, -77.043], ["Madrid, España", 40.417, -3.704], ["Nueva York, EE. UU.", 40.713, -74.006], ["Tokio, Japón", 35.69, 139.692]];
+let sugs = [], idx = -1, temporizador;
+const leerRec = () => { try { return JSON.parse(localStorage.getItem("recientes") || "[]"); } catch (e) { return []; } };
+function guardarRec(n, lat, lon) { try { const r = leerRec().filter(x => x[0] !== n); r.unshift([n, lat, lon]); localStorage.setItem("recientes", JSON.stringify(r.slice(0, 5))); } catch (e) {} }
+function coordenadas(q) {
+  const m = q.match(/^(-?\d{1,2}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)$/);
+  if (!m) return null;
+  const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
+  return (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) ? [lat, lon] : null;
+}
+function cerrarSug() { $("sug").hidden = true; idx = -1; $("buscar").setAttribute("aria-expanded", "false"); $("buscar").removeAttribute("aria-activedescendant"); }
+function pintarSug(items, titulo, vacio) {
+  sugs = items; idx = -1;
+  $("sug").innerHTML = (titulo ? `<li class="h" role="presentation">${titulo}</li>` : "") + (vacio ? `<li class="h" role="presentation">${vacio}</li>` : "") +
+    items.map((s, i) => `<li role="option" id="op${i}" data-i="${i}"><div class="t">${esc(s.n)}</div><div class="sb">${esc(s.s || "")}</div></li>`).join("");
+  $("sug").hidden = false; $("buscar").setAttribute("aria-expanded", "true");
+}
+async function sugerir() {
+  const q = $("buscar").value.trim();
+  if (!q) {
+    const r = leerRec(), base = r.length ? r : POPULARES;
+    pintarSug(base.map(x => ({ n: x[0], s: r.length ? "Búsqueda reciente" : "Ciudad popular", lat: x[1], lon: x[2] })), r.length ? "Recientes" : "Ciudades populares");
+    return;
+  }
+  const c = coordenadas(q);
+  if (c) { pintarSug([{ n: `Ir a ${c[0]}, ${c[1]}`, s: "Coordenadas", lat: c[0], lon: c[1] }]); return; }
+  if (q.length < 2) { cerrarSug(); return; }
+  try {
+    const d = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=es`);
+    if ($("buscar").value.trim() !== q) return;   // llegó una respuesta vieja
+    const items = (d.results || []).map(r => ({ n: [r.name, r.admin1, r.country].filter(Boolean).join(", "), s: `${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}`, lat: r.latitude, lon: r.longitude }));
+    pintarSug(items, "", items.length ? "" : `Sin coincidencias para "${esc(q)}"`);
+  } catch (e) { cerrarSug(); }
+}
+function elegir(s) {
+  if (!s) return;
+  $("buscar").value = s.n; cerrarSug(); guardarRec(s.n, s.lat, s.lon);
+  mostrarCiudad(s.n, s.lat, s.lon);
+}
+function marcarOpcion(n) {
+  const ops = $("sug").querySelectorAll("[data-i]"); if (!ops.length) return;
+  idx = (n + ops.length) % ops.length;
+  ops.forEach((o, i) => o.setAttribute("aria-selected", i === idx));
+  $("buscar").setAttribute("aria-activedescendant", "op" + idx);
+  ops[idx].scrollIntoView({ block: "nearest" });
+}
+$("buscar").addEventListener("input", () => { clearTimeout(temporizador); temporizador = setTimeout(sugerir, 250); });
+$("buscar").addEventListener("focus", sugerir);
+$("buscar").addEventListener("keydown", async e => {
+  if (e.key === "ArrowDown") { e.preventDefault(); if ($("sug").hidden) await sugerir(); marcarOpcion(idx + 1); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); marcarOpcion(idx - 1); }
+  else if (e.key === "Escape") cerrarSug();
+  else if (e.key === "Enter") {
+    e.preventDefault(); clearTimeout(temporizador);
+    if (idx < 0 && $("buscar").value.trim()) await sugerir();
+    elegir(sugs[Math.max(idx, 0)]);
+  }
+});
+$("sug").addEventListener("mousedown", e => { const li = e.target.closest("[data-i]"); if (li) { e.preventDefault(); elegir(sugs[li.dataset.i]); } });
+document.addEventListener("click", e => { if (!e.target.closest(".busq")) cerrarSug(); });
+
+/* ---------- Descargas ---------- */
+const datos = { lugar: { nombre: "Bogotá, Colombia", lat: 4.711, lon: -74.072 }, actual: null, pronostico: [], sismos: [], incendios: [] };
+const msg = t => { $("msgDesc").textContent = t; };
+const slug = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const filaSismo = f => ({ fecha_utc: new Date(f.properties.time).toISOString(), magnitud: f.properties.mag, lugar: f.properties.place, latitud: f.geometry.coordinates[1], longitud: f.geometry.coordinates[0], profundidad_km: f.geometry.coordinates[2], url: f.properties.url });
+
+function aCSV(filas) {
+  const cols = Object.keys(filas[0]);
+  const cel = v => {
+    if (v == null) return "";
+    v = String(v);
+    if (/^[=+@]/.test(v) || (/^-/.test(v) && isNaN(v))) v = "'" + v;   // evita fórmulas al abrir en Excel
+    return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  };
+  return [cols.join(","), ...filas.map(f => cols.map(c => cel(f[c])).join(","))].join("\r\n");
+}
+function bajar(nombre, contenido, tipo) {
+  const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
+  const a = document.createElement("a");
+  a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function exportar(base, filas, fmt) {
+  if (!filas.length) { msg("No hay registros para descargar todavía."); return; }
+  if (fmt === "csv") bajar(base + ".csv", "\ufeff" + aCSV(filas), "text/csv;charset=utf-8");
+  else bajar(base + ".json", JSON.stringify(filas, null, 2), "application/json");
+  msg(`Descarga lista: ${base}.${fmt} (${filas.length} registro${filas.length === 1 ? "" : "s"}).`);
+}
+
+const hoyISO = new Date().toISOString().slice(0, 10);
+const CONJ = [
+  ["condiciones_actuales", "Condiciones actuales (clima y aire)", () => datos.actual && datos.actual.temperatura_c != null ? [datos.actual] : [], true],
+  ["pronostico_7_dias", "Pronóstico de 7 días", () => datos.pronostico, true],
+  ["sismos_24h", "Sismos de las últimas 24 horas (M2.5+)", () => datos.sismos, false],
+  ["incendios_activos", "Incendios forestales activos", () => datos.incendios, false]
+];
+function actualizarDescargas() {
+  $("descargas").innerHTML = CONJ.map(([k, t, f]) => {
+    const n = f().length, dis = n ? "" : "disabled";
+    return `<div class="drow"><div><b>${t}</b><br><small class="muted">${n} registro${n === 1 ? "" : "s"}</small></div><div><button class="btn2" type="button" data-k="${k}" data-f="csv" ${dis}>CSV</button> <button class="btn2" type="button" data-k="${k}" data-f="json" ${dis}>JSON</button></div></div>`;
+  }).join("");
+}
+$("descargas").addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]"); if (!b) return;
+  const c = CONJ.find(x => x[0] === b.dataset.k);
+  exportar(`${c[0]}${c[3] ? "_" + slug(datos.lugar.nombre) : ""}_${hoyISO}`, c[2](), b.dataset.f);
+});
+$("btnTodo").addEventListener("click", () => {
+  bajar(`datos_ambientales_${hoyISO}.json`, JSON.stringify({
+    descargado_utc: new Date().toISOString(), lugar: datos.lugar,
+    fuentes: { clima_y_aire: "Open-Meteo", sismos: "USGS", incendios: "NASA EONET" },
+    condiciones_actuales: datos.actual, pronostico_7_dias: datos.pronostico, sismos_24h: datos.sismos, incendios_activos: datos.incendios
+  }, null, 2), "application/json");
+  msg("Descarga lista: archivo JSON con todos los datos actuales.");
+});
+
+/* Periodo histórico: clima (Open-Meteo Archive) y sismos (USGS) */
+const dHasta = new Date(); dHasta.setDate(dHasta.getDate() - 5);
+const dDesde = new Date(); dDesde.setDate(dDesde.getDate() - 35);
+$("hHasta").value = dHasta.toISOString().slice(0, 10); $("hDesde").value = dDesde.toISOString().slice(0, 10);
+$("hHasta").max = hoyISO; $("hDesde").max = hoyISO;
+
+document.querySelector(".hbtns").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-h]"); if (!b) return;
+  const d1 = $("hDesde").value, d2 = $("hHasta").value;
+  if (!d1 || !d2 || d1 > d2) { msg("Elige un rango válido: la fecha «Desde» no puede ser posterior a «Hasta»."); return; }
+  msg("Consultando datos, un momento…");
+  try {
+    let filas;
+    if (b.dataset.h === "clima") {
+      const L0 = datos.lugar;
+      const d = (await getJSON(`https://archive-api.open-meteo.com/v1/archive?latitude=${L0.lat}&longitude=${L0.lon}&start_date=${d1}&end_date=${d2}&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,wind_speed_10m_max&timezone=auto`)).daily;
+      filas = d.time.map((t, i) => ({ lugar: L0.nombre, latitud: L0.lat, longitud: L0.lon, fecha: t, temp_max_c: d.temperature_2m_max[i], temp_min_c: d.temperature_2m_min[i], temp_media_c: d.temperature_2m_mean[i], precipitacion_mm: d.precipitation_sum[i], viento_max_kmh: d.wind_speed_10m_max[i] }));
+      exportar(`clima_historico_${slug(L0.nombre)}_${d1}_a_${d2}`, filas, b.dataset.f);
+    } else {
+      if ((new Date(d2) - new Date(d1)) / 864e5 > 366) { msg("Para sismos elige un periodo de máximo 1 año."); return; }
+      const mm = $("hMag").value;
+      const d = await getJSON(`https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${d1}&endtime=${d2}T23:59:59&minmagnitude=${mm}&orderby=time&limit=20000`);
+      filas = d.features.map(filaSismo);
+      exportar(`sismos_M${mm}_${d1}_a_${d2}`, filas, b.dataset.f);
+      if (filas.length >= 20000) msg("Se alcanzó el máximo de 20.000 sismos: reduce el periodo o sube la magnitud mínima para obtener todos.");
+    }
+  } catch (err) { msg("No se pudo consultar el periodo. Revisa las fechas (el clima histórico tiene unos 5 días de retraso) e intenta de nuevo."); }
+});
+
+/* ---------- Mi ubicación ---------- */
+$("btnUbicacion").addEventListener("click", () => {
+  if (!navigator.geolocation) { $("lugar").textContent = "Tu navegador no permite obtener la ubicación. Escribe una ciudad o coordenadas."; return; }
+  $("lugar").textContent = "Obteniendo tu ubicación… acepta el permiso del navegador.";
+  navigator.geolocation.getCurrentPosition(
+    p => mostrarCiudad("Mi ubicación", p.coords.latitude, p.coords.longitude),
+    err => { $("lugar").textContent = ({ 1: "Negaste el permiso de ubicación. Actívalo en el navegador o escribe una ciudad.", 2: "No se pudo determinar tu posición. Escribe una ciudad o coordenadas.", 3: "La búsqueda de ubicación tardó demasiado. Intenta de nuevo." })[err.code] || "No se pudo obtener tu ubicación."; },
+    { timeout: 10000, maximumAge: 300000 });
+});
+
+iniciarMapa();
+mostrarCiudad("Bogotá, Colombia", 4.711, -74.072);
+cargarSismos();
+cargarIncendios();
+</script>
+</body>
+</html>
